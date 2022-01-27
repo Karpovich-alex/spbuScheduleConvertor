@@ -9,10 +9,10 @@ cal.add('prodid', '-//Google Inc//Google Calendar 70.9054//EN')
 
 
 class Subject:
-    params = ['TimeStart', 'TimeEnd', 'DateStart', 'DateEnd', 'SubjectName', 'Place', 'Teacher', 'RepeatTime']
+    params = ['TimeStart', 'TimeEnd', 'DateStart', 'DateEnd', 'SubjectName', 'Place', 'Teacher', 'RepeatTime', 'SubGroup']
     tz = pytz.timezone('Europe/Moscow')
 
-    def __init__(self, TimeStart, TimeEnd, DateStart, DateEnd, SubjectName, Place, Teacher, RepeatTime=1):
+    def __init__(self, TimeStart, TimeEnd, DateStart, DateEnd, SubjectName, Place, Teacher, RepeatTime=1, SubGroup=None):
         self.time_start = TimeStart
         self.time_end = TimeEnd
         self.date_start = DateStart
@@ -21,6 +21,7 @@ class Subject:
         self.place = Place
         self.teacher = Teacher
         self.repeat_time = RepeatTime
+        self.sub_group = SubGroup
 
     # @property
     # def time_start(self):
@@ -49,7 +50,7 @@ class Subject:
         return cls(*subject_params)
 
     def __repr__(self):
-        return f"<Subject time start: {self.time_start} date start: {self.date_start} with {self.repeat_time} repeat>"
+        return f"<Subject time start: {self.time_start} date start: {self.date_start} with {self.repeat_time} repeats>"
 
     def to_event(self) -> Event:
         e = Event()
@@ -63,10 +64,21 @@ class Subject:
         return e
 
 
-s = Subject.from_series(event)
-print(s)
-e = s.to_event()
-print(e)
-cal.add_component(e)
-with open('example.ics', 'wb') as f:
+df = pd.read_csv('autumn.csv')
+
+df['DateStart'] = pd.to_datetime(df['DateStart'])
+df['DateEnd'] = pd.to_datetime(df['DateEnd'])
+df['TimeStart'] = pd.to_datetime(df['TimeStart'])
+df['TimeEnd'] = pd.to_datetime(df['TimeEnd'])
+for idx, item in df.iterrows():
+    item.TimeStart = pd.to_datetime(item.TimeStart, format='%H:%M:%S').time()
+    item.TimeEnd = pd.to_datetime(item.TimeEnd, format='%H:%M:%S').time()
+    item.DateStart = pd.to_datetime(item.DateStart, format='%d.%m.%Y')
+    item.DateEnd = pd.to_datetime(item.DateEnd, format='%d.%m.%Y')
+    s = Subject.from_series(item)
+
+    e = s.to_event()
+    cal.add_component(e)
+
+with open('example_autumn.ics', 'wb') as f:
     f.write(cal.to_ical())
