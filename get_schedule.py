@@ -4,8 +4,9 @@ import asyncio
 import datetime
 
 group_id = 304456
-url = "https://timetable.spbu.ru/StudentGroupEvents/ExcelWeek?studentGroupId={group_id}&weekMonday={week}".format(
+url = "https://timetable.spbu.ru/StudentGroupEvents/ExcelWeek?studentGroupId={group_id}".format(
     group_id=group_id)  # yyyy-mm-dd
+url = url + "&weekMonday={week}"
 start_date = datetime.date(2022, 2, 7)
 end_date = datetime.date(2022, 6, 6)
 
