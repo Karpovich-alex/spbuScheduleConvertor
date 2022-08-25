@@ -1,26 +1,25 @@
+import pytz
 from icalendar import Calendar, Event
 import pandas as pd
 import datetime as dt
-import pytz
-from examples.event_example import event
-
-cal = Calendar()
-cal.add('prodid', '-//Google Inc//Google Calendar 70.9054//EN')
 
 
 class Subject:
-    params = ['TimeStart', 'TimeEnd', 'DateStart', 'DateEnd', 'SubjectName', 'Place', 'Teacher', 'RepeatTime', 'SubGroup']
+    params = ['TimeStart', 'TimeEnd', 'DateStart', 'DateEnd', 'SubjectName', 'Place', 'Teacher', 'RepeatTime',
+              'RepeatType', 'SubGroup']
     tz = pytz.timezone('Europe/Moscow')
 
-    def __init__(self, TimeStart, TimeEnd, DateStart, DateEnd, SubjectName, Place, Teacher, RepeatTime=1, SubGroup=None):
+    def __init__(self, TimeStart, TimeEnd, DateStart, DateEnd, SubjectName, Place, Teacher, RepeatTime=1, RepeatType='',
+                 SubGroup=None):
         self.time_start = TimeStart
         self.time_end = TimeEnd
         self.date_start = DateStart
         self.date_end = DateEnd
-        self.subject_name = SubjectName
+        self.subject_name = SubjectName if not SubGroup else SubjectName + '#' + f'{SubGroup}'
         self.place = Place
         self.teacher = Teacher
         self.repeat_time = RepeatTime
+        self.repeat_type = RepeatType
         self.sub_group = SubGroup
 
     # @property
@@ -50,7 +49,7 @@ class Subject:
         return cls(*subject_params)
 
     def __repr__(self):
-        return f"<Subject time start: {self.time_start} date start: {self.date_start} with {self.repeat_time} repeats>"
+        return f"<Subject time start: {self.time_start} date start: {self.date_start} with {self.repeat_time} repeat>"
 
     def to_event(self) -> Event:
         e = Event()
@@ -60,25 +59,7 @@ class Subject:
         e.add('DESCRIPTION', f"Преподователь: {self.teacher}")
         e.add('LOCATION', self.place)
         e.add('LAST-MODIFIED', dt.datetime.now(self.tz))
-        e.add('RRULE', {'freq': 'weekly', 'count': self.repeat_time})
+        if self.repeat_type:
+            e.add('RRULE',
+                  {'freq': 'weekly', 'count': self.repeat_time, 'interval': 1 if self.repeat_type == 'weekly' else 2})
         return e
-
-
-df = pd.read_csv('autumn.csv')
-
-df['DateStart'] = pd.to_datetime(df['DateStart'])
-df['DateEnd'] = pd.to_datetime(df['DateEnd'])
-df['TimeStart'] = pd.to_datetime(df['TimeStart'])
-df['TimeEnd'] = pd.to_datetime(df['TimeEnd'])
-for idx, item in df.iterrows():
-    item.TimeStart = pd.to_datetime(item.TimeStart, format='%H:%M:%S').time()
-    item.TimeEnd = pd.to_datetime(item.TimeEnd, format='%H:%M:%S').time()
-    item.DateStart = pd.to_datetime(item.DateStart, format='%d.%m.%Y')
-    item.DateEnd = pd.to_datetime(item.DateEnd, format='%d.%m.%Y')
-    s = Subject.from_series(item)
-
-    e = s.to_event()
-    cal.add_component(e)
-
-with open('example_autumn.ics', 'wb') as f:
-    f.write(cal.to_ical())

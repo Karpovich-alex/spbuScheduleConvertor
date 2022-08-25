@@ -3,12 +3,15 @@ import aiofiles
 import asyncio
 import datetime
 
+# ID группы с сайта
 group_id = 304456
+# Даты начала и конца семестра
+start_date = datetime.date(2022, 2, 7)
+end_date = datetime.date(2022, 6, 6)
+
 url = "https://timetable.spbu.ru/StudentGroupEvents/ExcelWeek?studentGroupId={group_id}".format(
     group_id=group_id)  # yyyy-mm-dd
 url = url + "&weekMonday={week}"
-start_date = datetime.date(2022, 2, 7)
-end_date = datetime.date(2022, 6, 6)
 
 
 async def get_excel(session, date):
@@ -33,7 +36,7 @@ async def main():
         for date in get_dates():
             await get_excel(session, date)
 
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-# asyncio.run(main())
+if __name__=="__main__":
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+    # asyncio.run(main())
